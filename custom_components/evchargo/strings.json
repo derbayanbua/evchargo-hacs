@@ -3,13 +3,14 @@
     "step": {
       "user": {
         "title": "Connect to Evchargo",
-        "description": "Enter your Evchargo app credentials and charger ID.",
+        "description": "Enter your Evchargo app credentials, charger ID, and polling interval.",
         "data": {
           "username": "Username / email",
           "password": "Password",
           "charger_id": "Charger ID",
           "base_url": "Base URL",
-          "device_id": "Device ID"
+          "device_id": "Device ID",
+          "scan_interval": "Polling interval in seconds"
         }
       }
     },
@@ -19,6 +20,17 @@
     },
     "abort": {
       "already_configured": "This charger is already configured"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Evchargo options",
+        "description": "Set how often the integration refreshes charger status (30-240 seconds).",
+        "data": {
+          "scan_interval": "Polling interval in seconds"
+        }
+      }
     }
   }
 }

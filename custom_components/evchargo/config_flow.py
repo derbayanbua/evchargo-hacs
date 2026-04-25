@@ -14,22 +14,44 @@ from .const import (
     CONF_BASE_URL,
     CONF_CHARGER_ID,
     CONF_DEVICE_ID,
+    CONF_SCAN_INTERVAL,
     DEFAULT_BASE_URL,
     DEFAULT_DEVICE_ID,
+    DEFAULT_SCAN_INTERVAL_SECONDS,
     DOMAIN,
+    MAX_SCAN_INTERVAL_SECONDS,
+    MIN_SCAN_INTERVAL_SECONDS,
 )
 
 _LOGGER = logging.getLogger(__name__)
 
-STEP_USER_DATA_SCHEMA = vol.Schema(
-    {
-        vol.Required(CONF_USERNAME): str,
-        vol.Required(CONF_PASSWORD): str,
-        vol.Required(CONF_CHARGER_ID): str,
-        vol.Optional(CONF_BASE_URL, default=DEFAULT_BASE_URL): str,
-        vol.Optional(CONF_DEVICE_ID, default=DEFAULT_DEVICE_ID): str,
-    }
-)
+def _build_user_schema(defaults: dict[str, Any] | None = None) -> vol.Schema:
+    defaults = defaults or {}
+    return vol.Schema(
+        {
+            vol.Required(CONF_USERNAME, default=defaults.get(CONF_USERNAME, "")): str,
+            vol.Required(CONF_PASSWORD, default=defaults.get(CONF_PASSWORD, "")): str,
+            vol.Required(CONF_CHARGER_ID, default=defaults.get(CONF_CHARGER_ID, "")): str,
+            vol.Optional(CONF_BASE_URL, default=defaults.get(CONF_BASE_URL, DEFAULT_BASE_URL)): str,
+            vol.Optional(CONF_DEVICE_ID, default=defaults.get(CONF_DEVICE_ID, DEFAULT_DEVICE_ID)): str,
+            vol.Optional(
+                CONF_SCAN_INTERVAL,
+                default=int(defaults.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL_SECONDS)),
+            ): vol.All(vol.Coerce(int), vol.Range(min=MIN_SCAN_INTERVAL_SECONDS, max=MAX_SCAN_INTERVAL_SECONDS)),
+        }
+    )
+
+
+def _build_options_schema(options: dict[str, Any] | None = None) -> vol.Schema:
+    options = options or {}
+    return vol.Schema(
+        {
+            vol.Optional(
+                CONF_SCAN_INTERVAL,
+                default=int(options.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL_SECONDS)),
+            ): vol.All(vol.Coerce(int), vol.Range(min=MIN_SCAN_INTERVAL_SECONDS, max=MAX_SCAN_INTERVAL_SECONDS))
+        }
+    )
 
 
 class EvchargoConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
@@ -55,7 +77,7 @@ class EvchargoConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         return self.async_show_form(
             step_id="user",
-            data_schema=STEP_USER_DATA_SCHEMA,
+            data_schema=_build_user_schema(user_input),
             errors=errors,
         )
 
@@ -82,3 +104,28 @@ class EvchargoConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         cp_name = detail.get("cpName") or user_input[CONF_CHARGER_ID]
         return f"{cp_name} ({user_input[CONF_CHARGER_ID]})"
+
+    @staticmethod
+    @config_entries.callback
+    def async_get_options_flow(config_entry: config_entries.ConfigEntry):
+        return EvchargoOptionsFlow(config_entry)
+
+
+class EvchargoOptionsFlow(config_entries.OptionsFlow):
+    """Handle Evchargo options."""
+
+    def __init__(self, config_entry: config_entries.ConfigEntry) -> None:
+        self.config_entry = config_entry
+
+    async def async_step_init(self, user_input: dict[str, Any] | None = None):
+        if user_input is not None:
+            return self.async_create_entry(title="", data=user_input)
+
+        current_value = self.config_entry.options.get(
+            CONF_SCAN_INTERVAL,
+            self.config_entry.data.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL_SECONDS),
+        )
+        return self.async_show_form(
+            step_id="init",
+            data_schema=_build_options_schema({CONF_SCAN_INTERVAL: current_value}),
+        )

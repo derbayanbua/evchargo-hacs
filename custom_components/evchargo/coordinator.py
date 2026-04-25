@@ -9,7 +9,7 @@ from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from .api import EvchargoApi, EvchargoApiError, EvchargoAuthError
-from .const import DEFAULT_SCAN_INTERVAL
+from .const import DEFAULT_SCAN_INTERVAL_SECONDS
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -24,14 +24,14 @@ class EvchargoDataUpdateCoordinator(DataUpdateCoordinator[dict]):
         api: EvchargoApi,
         charger_id: str,
         *,
-        update_interval: timedelta = DEFAULT_SCAN_INTERVAL,
+        update_interval_seconds: int = DEFAULT_SCAN_INTERVAL_SECONDS,
     ) -> None:
         super().__init__(
             hass,
             _LOGGER,
             name=f"Evchargo {charger_id}",
             config_entry=config_entry,
-            update_interval=update_interval,
+            update_interval=timedelta(seconds=update_interval_seconds),
             always_update=True,
         )
         self.api = api

@@ -44,4 +44,4 @@ class EvchargoCurrentLimitNumber(EvchargoCoordinatorEntity, NumberEntity):
 
     async def async_set_native_value(self, value: float) -> None:
         await self.coordinator.api.async_set_current_limit(self._charger_id, int(value))
-        await self.coordinator.async_request_refresh()
+        await self.coordinator.async_refresh()

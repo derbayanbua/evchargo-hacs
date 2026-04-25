@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026.4.25.4
+- added configurable polling interval with limits of 30-240 seconds
+- set default polling interval to 60 seconds
+- added options flow support for changing the polling interval after setup
+- made button and current-limit interactions refresh immediately after execution
+
 ## 2026.4.25.3
 - documented the integration as experimental / use at your own risk
 - removed outdated note about needing to put the project in Git first

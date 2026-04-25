@@ -50,4 +50,4 @@ class EvchargoButton(EvchargoCoordinatorEntity, ButtonEntity):
 
     async def async_press(self) -> None:
         await self.entity_description.press_fn(self)
-        await self.coordinator.async_request_refresh()
+        await self.coordinator.async_refresh()
