@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026.4.25.8
+- adjusted German entity labels for plugged-in state and session energy
+- documented testing with charger model AC011K-AU-25
+
 ## 2026.4.25.7
 - replaced the separate start/stop buttons with a single charging switch
 

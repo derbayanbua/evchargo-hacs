@@ -48,7 +48,7 @@
         "name": "Spannung"
       },
       "session_energy": {
-        "name": "Sitzungsenergie"
+        "name": "Geladen Leistung"
       },
       "signal": {
         "name": "Signal"
@@ -62,7 +62,7 @@
         "name": "Lädt"
       },
       "active_appointment": {
-        "name": "Aktiver Termin"
+        "name": "Eingesteckt"
       },
       "bluetooth_supported": {
         "name": "Bluetooth unterstützt"

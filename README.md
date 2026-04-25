@@ -12,6 +12,8 @@ Custom HACS integration for Evchargo chargers using the confirmed mobile-app API
 
 This integration is built around the verified app endpoints discovered in the `evchargo-wrapper` research project.
 
+It has been tested with the charger model **AC011K-AU-25**.
+
 ### Implemented
 
 - UI config flow
