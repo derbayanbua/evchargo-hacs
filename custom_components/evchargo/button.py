@@ -19,12 +19,12 @@ class EvchargoButtonDescription(ButtonEntityDescription):
 BUTTONS: tuple[EvchargoButtonDescription, ...] = (
     EvchargoButtonDescription(
         key="start_charging",
-        name="Start charging",
+        translation_key="start_charging",
         press_fn=lambda entity: entity.coordinator.api.async_start_charging(entity._charger_id),
     ),
     EvchargoButtonDescription(
         key="stop_charging",
-        name="Stop charging",
+        translation_key="stop_charging",
         press_fn=lambda entity: entity.coordinator.api.async_stop_charging(entity._charger_id),
     ),
 )
@@ -46,7 +46,7 @@ class EvchargoButton(EvchargoCoordinatorEntity, ButtonEntity):
         super().__init__(coordinator)
         self.entity_description = description
         self._attr_unique_id = f"{self._charger_id}_{description.key}"
-        self._attr_name = description.name
+        self._attr_translation_key = description.translation_key
 
     async def async_press(self) -> None:
         await self.entity_description.press_fn(self)

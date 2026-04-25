@@ -15,6 +15,7 @@ This integration is built around the verified app endpoints discovered in the `e
 ### Implemented
 
 - UI config flow
+- German translation for setup/options and entity names
 - Config items:
   - username/email
   - password

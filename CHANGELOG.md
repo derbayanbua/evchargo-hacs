@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026.4.25.5
+- added German translations for config flow, options flow, and current entity names
+- switched entities to translation keys so Home Assistant can localize them properly
+
 ## 2026.4.25.4
 - added configurable polling interval with limits of 30-240 seconds
 - set default polling interval to 60 seconds

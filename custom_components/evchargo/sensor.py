@@ -23,13 +23,13 @@ class EvchargoSensorDescription(SensorEntityDescription):
 SENSORS: tuple[EvchargoSensorDescription, ...] = (
     EvchargoSensorDescription(
         key="status",
-        name="Status",
+        translation_key="status",
         value_fn=lambda data: (data.get("detail") or {}).get("runStatus"),
         extra_attributes=True,
     ),
     EvchargoSensorDescription(
         key="power",
-        name="Power",
+        translation_key="power",
         device_class=SensorDeviceClass.POWER,
         native_unit_of_measurement=UnitOfPower.KILO_WATT,
         state_class=SensorStateClass.MEASUREMENT,
@@ -37,7 +37,7 @@ SENSORS: tuple[EvchargoSensorDescription, ...] = (
     ),
     EvchargoSensorDescription(
         key="current",
-        name="Current",
+        translation_key="current",
         device_class=SensorDeviceClass.CURRENT,
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
         state_class=SensorStateClass.MEASUREMENT,
@@ -45,7 +45,7 @@ SENSORS: tuple[EvchargoSensorDescription, ...] = (
     ),
     EvchargoSensorDescription(
         key="voltage",
-        name="Voltage",
+        translation_key="voltage",
         device_class=SensorDeviceClass.VOLTAGE,
         native_unit_of_measurement=UnitOfElectricPotential.VOLT,
         state_class=SensorStateClass.MEASUREMENT,
@@ -53,7 +53,7 @@ SENSORS: tuple[EvchargoSensorDescription, ...] = (
     ),
     EvchargoSensorDescription(
         key="session_energy",
-        name="Session energy",
+        translation_key="session_energy",
         device_class=SensorDeviceClass.ENERGY,
         native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
         state_class=SensorStateClass.MEASUREMENT,
@@ -61,13 +61,13 @@ SENSORS: tuple[EvchargoSensorDescription, ...] = (
     ),
     EvchargoSensorDescription(
         key="signal",
-        name="Signal",
+        translation_key="signal",
         entity_category=EntityCategory.DIAGNOSTIC,
         value_fn=lambda data: (data.get("detail") or {}).get("signal"),
     ),
     EvchargoSensorDescription(
         key="firmware",
-        name="Firmware",
+        translation_key="firmware",
         entity_category=EntityCategory.DIAGNOSTIC,
         value_fn=lambda data: (data.get("firmware_info") or {}).get("currentVer"),
     ),
@@ -90,7 +90,7 @@ class EvchargoSensor(EvchargoCoordinatorEntity, SensorEntity):
         super().__init__(coordinator)
         self.entity_description = description
         self._attr_unique_id = f"{self._charger_id}_{description.key}"
-        self._attr_name = description.name
+        self._attr_translation_key = description.translation_key
 
     @property
     def native_value(self) -> Any:

@@ -21,17 +21,17 @@ class EvchargoBinarySensorDescription(BinarySensorEntityDescription):
 BINARY_SENSORS: tuple[EvchargoBinarySensorDescription, ...] = (
     EvchargoBinarySensorDescription(
         key="charging",
-        name="Charging",
+        translation_key="charging",
         value_fn=lambda data: (data.get("detail") or {}).get("cpInCharging"),
     ),
     EvchargoBinarySensorDescription(
         key="active_appointment",
-        name="Active appointment",
+        translation_key="active_appointment",
         value_fn=lambda data: (data.get("detail") or {}).get("existsActiveAppointment"),
     ),
     EvchargoBinarySensorDescription(
         key="bluetooth_supported",
-        name="Bluetooth supported",
+        translation_key="bluetooth_supported",
         entity_category=EntityCategory.DIAGNOSTIC,
         value_fn=lambda data: (data.get("detail") or {}).get("supportBlueTooth"),
     ),
@@ -56,7 +56,7 @@ class EvchargoBinarySensor(EvchargoCoordinatorEntity, BinarySensorEntity):
         super().__init__(coordinator)
         self.entity_description = description
         self._attr_unique_id = f"{self._charger_id}_{description.key}"
-        self._attr_name = description.name
+        self._attr_translation_key = description.translation_key
 
     @property
     def is_on(self) -> bool | None:

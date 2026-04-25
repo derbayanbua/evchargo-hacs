@@ -1,0 +1,85 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Mit Evchargo verbinden",
+        "description": "Gib deine Evchargo-App-Zugangsdaten, die Charger-ID und das Abfrageintervall ein.",
+        "data": {
+          "username": "Benutzername / E-Mail",
+          "password": "Passwort",
+          "charger_id": "Charger-ID",
+          "base_url": "Basis-URL",
+          "device_id": "Geräte-ID",
+          "scan_interval": "Abfrageintervall in Sekunden"
+        }
+      }
+    },
+    "error": {
+      "invalid_auth": "Authentifizierung fehlgeschlagen",
+      "cannot_connect": "Verbindung zu Evchargo nicht möglich"
+    },
+    "abort": {
+      "already_configured": "Dieser Charger ist bereits eingerichtet"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Evchargo-Optionen",
+        "description": "Lege fest, wie oft der Charger-Status aktualisiert wird (30-240 Sekunden).",
+        "data": {
+          "scan_interval": "Abfrageintervall in Sekunden"
+        }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "status": {
+        "name": "Status"
+      },
+      "power": {
+        "name": "Leistung"
+      },
+      "current": {
+        "name": "Strom"
+      },
+      "voltage": {
+        "name": "Spannung"
+      },
+      "session_energy": {
+        "name": "Sitzungsenergie"
+      },
+      "signal": {
+        "name": "Signal"
+      },
+      "firmware": {
+        "name": "Firmware"
+      }
+    },
+    "binary_sensor": {
+      "charging": {
+        "name": "Lädt"
+      },
+      "active_appointment": {
+        "name": "Aktiver Termin"
+      },
+      "bluetooth_supported": {
+        "name": "Bluetooth unterstützt"
+      }
+    },
+    "button": {
+      "start_charging": {
+        "name": "Laden starten"
+      },
+      "stop_charging": {
+        "name": "Laden stoppen"
+      }
+    },
+    "number": {
+      "current_limit": {
+        "name": "Stromlimit"
+      }
+    }
+  }
+}

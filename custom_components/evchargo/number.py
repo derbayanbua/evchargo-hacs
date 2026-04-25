@@ -20,7 +20,7 @@ async def async_setup_entry(
 class EvchargoCurrentLimitNumber(EvchargoCoordinatorEntity, NumberEntity):
     """Current limit control for the charger."""
 
-    _attr_name = "Current limit"
+    _attr_translation_key = "current_limit"
     _attr_native_step = 1
     _attr_mode = NumberMode.BOX
     _attr_native_unit_of_measurement = UnitOfElectricCurrent.AMPERE

@@ -32,5 +32,54 @@
         }
       }
     }
+  },
+  "entity": {
+    "sensor": {
+      "status": {
+        "name": "Status"
+      },
+      "power": {
+        "name": "Power"
+      },
+      "current": {
+        "name": "Current"
+      },
+      "voltage": {
+        "name": "Voltage"
+      },
+      "session_energy": {
+        "name": "Session energy"
+      },
+      "signal": {
+        "name": "Signal"
+      },
+      "firmware": {
+        "name": "Firmware"
+      }
+    },
+    "binary_sensor": {
+      "charging": {
+        "name": "Charging"
+      },
+      "active_appointment": {
+        "name": "Active appointment"
+      },
+      "bluetooth_supported": {
+        "name": "Bluetooth supported"
+      }
+    },
+    "button": {
+      "start_charging": {
+        "name": "Start charging"
+      },
+      "stop_charging": {
+        "name": "Stop charging"
+      }
+    },
+    "number": {
+      "current_limit": {
+        "name": "Current limit"
+      }
+    }
   }
 }
