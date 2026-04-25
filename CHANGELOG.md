@@ -1,5 +1,8 @@
 # Changelog
 
+## 2026.4.25.6
+- fixed the options/settings flow initialization to prevent server errors when changing settings later
+
 ## 2026.4.25.5
 - added German translations for config flow, options flow, and current entity names
 - switched entities to translation keys so Home Assistant can localize them properly

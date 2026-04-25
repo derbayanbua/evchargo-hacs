@@ -25,6 +25,7 @@ from .const import (
 
 _LOGGER = logging.getLogger(__name__)
 
+
 def _build_user_schema(defaults: dict[str, Any] | None = None) -> vol.Schema:
     defaults = defaults or {}
     return vol.Schema(
@@ -115,15 +116,16 @@ class EvchargoOptionsFlow(config_entries.OptionsFlow):
     """Handle Evchargo options."""
 
     def __init__(self, config_entry: config_entries.ConfigEntry) -> None:
-        self.config_entry = config_entry
+        super().__init__()
+        self._config_entry = config_entry
 
     async def async_step_init(self, user_input: dict[str, Any] | None = None):
         if user_input is not None:
             return self.async_create_entry(title="", data=user_input)
 
-        current_value = self.config_entry.options.get(
+        current_value = self._config_entry.options.get(
             CONF_SCAN_INTERVAL,
-            self.config_entry.data.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL_SECONDS),
+            self._config_entry.data.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL_SECONDS),
         )
         return self.async_show_form(
             step_id="init",
