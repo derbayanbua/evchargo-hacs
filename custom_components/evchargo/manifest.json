@@ -1,11 +1,11 @@
 {
   "domain": "evchargo",
   "name": "Evchargo",
-  "version": "2026.4.25.2",
+  "version": "2026.4.25.3",
   "config_flow": true,
-  "documentation": "https://github.com/your-github-user/evchargo-hacs#readme",
-  "issue_tracker": "https://github.com/your-github-user/evchargo-hacs/issues",
-  "codeowners": [],
+  "documentation": "https://github.com/derbayanbua/evchargo-hacs#readme",
+  "issue_tracker": "https://github.com/derbayanbua/evchargo-hacs/issues",
+  "codeowners": ["@derbayanbua"],
   "integration_type": "hub",
   "iot_class": "cloud_polling",
   "requirements": []

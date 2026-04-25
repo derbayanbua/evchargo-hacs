@@ -1,5 +1,7 @@
 # Evchargo Home Assistant integration
 
+> **Experimental / use at your own risk:** This integration is an experiment and should be used entirely at your own risk.
+>
 > **AI-assisted project:** Parts of this repository were created with AI assistance. See [AI-DISCLAIMER.md](./AI-DISCLAIMER.md).
 
 Custom HACS integration for Evchargo chargers using the confirmed mobile-app API path:
@@ -46,17 +48,14 @@ The integration fetches data from these confirmed endpoints when available:
 
 ## Installation with HACS
 
-1. Put this repository in Git.
-2. Add it to HACS as a custom repository of type **Integration**.
-3. Install the integration.
-4. Restart Home Assistant.
-5. Add **Evchargo** via **Settings → Devices & Services**.
+1. Add this repository to HACS as a custom repository of type **Integration**.
+2. Install the integration.
+3. Restart Home Assistant.
+4. Add **Evchargo** via **Settings → Devices & Services**.
 
 ## Important notes
 
-- The manifest currently contains placeholder GitHub URLs for `documentation` and `issue_tracker`.
-- Replace those values before publishing publicly.
-- `codeowners` is intentionally empty until the final GitHub owner/repository is decided.
+- This integration is experimental and is provided without warranty; use it at your own risk.
 - The integration currently follows the confirmed plaintext app login path (`encrypt=false`).
 - Trusted-device verification is not implemented yet.
 - Only the practically confirmed write actions are exposed right now: start, stop, and current limit.
@@ -64,7 +63,7 @@ The integration fetches data from these confirmed endpoints when available:
 
 ## AI disclaimer
 
-This project was developed with AI assistance for code generation, refactoring, structure, and documentation. The integration was then grounded against the confirmed Evchargo app API behavior where possible, but it still needs human review before wider publication or production use.
+This project was developed with AI assistance for code generation, refactoring, structure, and documentation. The integration was then grounded against the confirmed Evchargo app API behavior where possible, but it remains experimental and still needs human review before wider publication or production use.
 
 ## Project structure
 
