@@ -1,5 +1,8 @@
 # Changelog
 
+## 2026.4.25.7
+- replaced the separate start/stop buttons with a single charging switch
+
 ## 2026.4.25.6
 - fixed the options/settings flow initialization to prevent server errors when changing settings later
 

@@ -68,12 +68,9 @@
         "name": "Bluetooth unterstützt"
       }
     },
-    "button": {
-      "start_charging": {
-        "name": "Laden starten"
-      },
-      "stop_charging": {
-        "name": "Laden stoppen"
+    "switch": {
+      "charging_control": {
+        "name": "Laden"
       }
     },
     "number": {
