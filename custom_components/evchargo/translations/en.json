@@ -1,0 +1,24 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Connect to Evchargo",
+        "description": "Enter your Evchargo app credentials and charger ID.",
+        "data": {
+          "username": "Username / email",
+          "password": "Password",
+          "charger_id": "Charger ID",
+          "base_url": "Base URL",
+          "device_id": "Device ID"
+        }
+      }
+    },
+    "error": {
+      "invalid_auth": "Authentication failed",
+      "cannot_connect": "Unable to connect to Evchargo"
+    },
+    "abort": {
+      "already_configured": "This charger is already configured"
+    }
+  }
+}
