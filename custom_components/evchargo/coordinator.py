@@ -172,13 +172,6 @@ class EvchargoDataUpdateCoordinator(DataUpdateCoordinator[dict]):
             )
             self._charging_enabled = False
             self._last_start_requested_at = None
-            try:
-                await self._async_stop_charging()
-            except EvchargoApiError:
-                _LOGGER.warning(
-                    "Failed to clear stale Evchargo charging state after charging stopped",
-                    exc_info=True,
-                )
 
 
 def _coerce_bool(value: Any) -> bool | None:

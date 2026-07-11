@@ -69,7 +69,7 @@ The integration fetches data from these confirmed endpoints when available:
 - Switch interactions and current-limit changes are executed immediately and then refreshed right away.
 - API errors include the HTTP method, endpoint, HTTP status, Evchargo API code, and backend message where available.
 - Use the diagnostic re-authenticate button when the cloud token appears stale without needing to reload the full integration.
-- When the charger no longer reports active charging, the integration clears the HA charging switch state and sends a stop command once so a reconnect does not unexpectedly resume an old HA-triggered charging request.
+- When the charger no longer reports active charging, the integration clears the HA charging switch state without sending another stop command, because the Evchargo API can reject that stale stop with `Records does not exist`.
 - Additional writable charger options seen in APK traces should be treated as experimental until their payloads are verified more thoroughly.
 
 ## AI disclaimer
