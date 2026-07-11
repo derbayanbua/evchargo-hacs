@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026.7.11.1
+- fixed stale charging-state reconciliation so Home Assistant only clears its local charging switch when the charger already reports inactive charging, instead of sending another stop command
+- avoided an unwanted current-limit reset to 6 A when the Evchargo backend rejects a stale stop request with `Records does not exist`
+
 ## 2026.5.31.1
 - added diagnostic refresh and reauthenticate buttons for manual recovery after token or cloud-state issues
 - added extra diagnostic sensors for current limits, active charge order ID, latest firmware, plugged-in state, and online state
