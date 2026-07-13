@@ -27,7 +27,25 @@ async def _async_reauthenticate(coordinator) -> None:
     await coordinator.async_request_refresh()
 
 
+async def _async_start_charging(coordinator) -> None:
+    await coordinator.async_set_charging_enabled(True)
+
+
+async def _async_stop_charging(coordinator) -> None:
+    await coordinator.async_set_charging_enabled(False)
+
+
 BUTTONS: tuple[EvchargoButtonDescription, ...] = (
+    EvchargoButtonDescription(
+        key="start_charging",
+        translation_key="start_charging",
+        press_fn=_async_start_charging,
+    ),
+    EvchargoButtonDescription(
+        key="stop_charging",
+        translation_key="stop_charging",
+        press_fn=_async_stop_charging,
+    ),
     EvchargoButtonDescription(
         key="refresh",
         translation_key="refresh",

@@ -27,9 +27,9 @@ It has been tested with the charger model **AC011K-AU-25**.
   - polling interval between **30 and 240 seconds** (default: **60 seconds**)
 - Polling via `DataUpdateCoordinator`
 - Read access to the confirmed charger data surface
-- Charging switch (on/off) with immediate execution
+- Charging switch (on/off) plus separate start/stop buttons with immediate execution
 - Automatic reset of the Home Assistant charging switch when charging stops after unplugging or interruption, so reconnecting the car does not silently resume a stale HA-issued charge request
-- Current limit number entity (`PUT /app/v1/home/cp/{cpId}/current?current=<A>`) with immediate execution and refresh
+- Current limit slider (`PUT /app/v1/home/cp/{cpId}/current?current=<A>`) using API-provided limits/steps where available, with immediate execution and refresh
 - Diagnostic buttons for manual refresh and forced re-authentication
 - Additional diagnostic sensors for current limits, active charge order ID, latest firmware, plugged-in state, and online state
 - Main status sensor with sanitized operational attributes from the confirmed app endpoints
@@ -69,7 +69,7 @@ Only non-private operational diagnostics are exposed as Home Assistant state att
 - Trusted-device verification is not implemented yet.
 - Only the practically confirmed write actions are exposed right now: charging on/off and current limit.
 - Status polling is configurable between 30 and 240 seconds, with a default of 60 seconds.
-- Switch interactions and current-limit changes are executed immediately and then refreshed right away.
+- Switch, start/stop button, and current-limit changes are executed immediately and then refreshed right away.
 - API errors include the HTTP method, endpoint, HTTP status, Evchargo API code, and backend message where available.
 - Use the diagnostic re-authenticate button when the cloud token appears stale without needing to reload the full integration.
 - When the charger no longer reports active charging, the integration clears the HA charging switch state without sending another stop command, because the Evchargo API can reject that stale stop with `Records does not exist`.

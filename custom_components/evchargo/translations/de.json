@@ -100,6 +100,12 @@
       }
     },
     "button": {
+      "start_charging": {
+        "name": "Laden starten"
+      },
+      "stop_charging": {
+        "name": "Laden stoppen"
+      },
       "refresh": {
         "name": "Aktualisieren"
       },

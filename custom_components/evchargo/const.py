@@ -36,6 +36,8 @@ ATTR_EXPERIMENTAL_CONTROLS = "experimental_controls"
 
 SERVICE_CONTROLS = [
     "charging_switch",
+    "start_button",
+    "stop_button",
     "current_limit",
     "refresh_button",
     "reauthenticate_button",
