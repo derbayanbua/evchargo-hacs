@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 2026.7.13.1
 - added integration-local icon/logo assets so HACS installs the Evchargo icon with the custom component
 - changed the current-limit control from a numeric input box to a slider that uses API-provided current limits and steps where available
 - restored separate start and stop charging buttons alongside the charging switch
