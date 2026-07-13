@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+- restricted custom API base URLs to sanitized HTTPS URLs without embedded credentials
+- changed the config-flow password field to a password selector
+- limited status-sensor attributes to sanitized operational diagnostics instead of exposing raw account, user, RFID, auth, or payment payloads
+- hardened API response parsing for unexpected JSON shapes
+
 ## 2026.7.11.1
 - fixed stale charging-state reconciliation so Home Assistant only clears its local charging switch when the charger already reports inactive charging, instead of sending another stop command
 - avoided an unwanted current-limit reset to 6 A when the Evchargo backend rejects a stale stop request with `Records does not exist`

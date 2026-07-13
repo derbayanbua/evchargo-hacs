@@ -32,7 +32,7 @@ It has been tested with the charger model **AC011K-AU-25**.
 - Current limit number entity (`PUT /app/v1/home/cp/{cpId}/current?current=<A>`) with immediate execution and refresh
 - Diagnostic buttons for manual refresh and forced re-authentication
 - Additional diagnostic sensors for current limits, active charge order ID, latest firmware, plugged-in state, and online state
-- Main status sensor with flattened raw attributes from the confirmed app endpoints
+- Main status sensor with sanitized operational attributes from the confirmed app endpoints
 
 ### Exposed data
 
@@ -52,6 +52,8 @@ The integration fetches data from these confirmed endpoints when available:
 - `/app/v1/home/getPlatformList`
 - `/app/v1/business/payment/config/{cpId}`
 
+Only non-private operational diagnostics are exposed as Home Assistant state attributes. Account, authorization, RFID, payment, user-list, location, contact, token, and similar fields are either not exposed as attributes or are redacted.
+
 ## Installation with HACS
 
 1. Add this repository to HACS as a custom repository of type **Integration**.
@@ -62,7 +64,8 @@ The integration fetches data from these confirmed endpoints when available:
 ## Important notes
 
 - This integration is experimental and is provided without warranty; use it at your own risk.
-- The integration currently follows the confirmed plaintext app login path (`encrypt=false`).
+- The integration currently follows the confirmed app login path (`encrypt=false`) over HTTPS only.
+- Custom API base URLs must use HTTPS and must not include embedded credentials, query strings, or fragments.
 - Trusted-device verification is not implemented yet.
 - Only the practically confirmed write actions are exposed right now: charging on/off and current limit.
 - Status polling is configurable between 30 and 240 seconds, with a default of 60 seconds.

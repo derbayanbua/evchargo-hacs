@@ -4,15 +4,56 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
 
-from homeassistant.components.sensor import SensorDeviceClass, SensorEntity, SensorEntityDescription, SensorStateClass
-from homeassistant.const import EntityCategory, UnitOfElectricCurrent, UnitOfElectricPotential, UnitOfEnergy, UnitOfPower
+from homeassistant.components.sensor import (
+    SensorDeviceClass,
+    SensorEntity,
+    SensorEntityDescription,
+    SensorStateClass,
+)
+from homeassistant.const import (
+    EntityCategory,
+    UnitOfElectricCurrent,
+    UnitOfElectricPotential,
+    UnitOfEnergy,
+    UnitOfPower,
+)
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .__init__ import EvchargoConfigEntry
-from .const import ATTR_EXPERIMENTAL_CONTROLS, ATTR_SETTABLE_CONTROLS, EXPERIMENTAL_CONTROLS, SERVICE_CONTROLS
+from .const import (
+    ATTR_EXPERIMENTAL_CONTROLS,
+    ATTR_SETTABLE_CONTROLS,
+    EXPERIMENTAL_CONTROLS,
+    SERVICE_CONTROLS,
+)
 from .entity import EvchargoCoordinatorEntity
 from .value import first_float, first_value
+
+SAFE_STATUS_ATTRIBUTE_SOURCES = (
+    "detail",
+    "firmware_info",
+    "upgrade_status",
+    "lbc_and_pv",
+    "rate",
+)
+SENSITIVE_ATTRIBUTE_KEY_PARTS = (
+    "address",
+    "auth",
+    "email",
+    "location",
+    "mobile",
+    "name",
+    "order",
+    "password",
+    "payment",
+    "phone",
+    "rfid",
+    "serial",
+    "token",
+    "user",
+)
+REDACTED_ATTRIBUTE_VALUE = "***"
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -144,7 +185,12 @@ SENSORS: tuple[EvchargoSensorDescription, ...] = (
         key="signal",
         translation_key="signal",
         entity_category=EntityCategory.DIAGNOSTIC,
-        value_fn=lambda data: first_value(data, "detail.signal", "detail.rssi", "detail.csq"),
+        value_fn=lambda data: first_value(
+            data,
+            "detail.signal",
+            "detail.rssi",
+            "detail.csq",
+        ),
     ),
     EvchargoSensorDescription(
         key="firmware",
@@ -179,7 +225,9 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     coordinator = entry.runtime_data.coordinator
-    async_add_entities(EvchargoSensor(coordinator, description) for description in SENSORS)
+    async_add_entities(
+        EvchargoSensor(coordinator, description) for description in SENSORS
+    )
 
 
 class EvchargoSensor(EvchargoCoordinatorEntity, SensorEntity):
@@ -207,36 +255,30 @@ def _build_status_attributes(data: dict[str, Any]) -> dict[str, Any]:
         ATTR_SETTABLE_CONTROLS: SERVICE_CONTROLS,
         ATTR_EXPERIMENTAL_CONTROLS: EXPERIMENTAL_CONTROLS,
     }
-    attrs.update(_flatten("detail", data.get("detail") or {}))
-    for key in (
-        "user_info",
-        "cp_list",
-        "cp_list_alt",
-        "home_users",
-        "rfid_cp_list",
-        "auth_user_list",
-        "firmware_info",
-        "upgrade_status",
-        "lbc_and_pv",
-        "rate",
-        "platforms",
-        "payment_config",
-    ):
+    for key in SAFE_STATUS_ATTRIBUTE_SOURCES:
         value = data.get(key)
         if value is not None:
-            attrs.update(_flatten(key, value))
+            attrs.update(_flatten_safe(key, value))
     return attrs
 
 
-def _flatten(prefix: str, value: Any) -> dict[str, Any]:
+def _flatten_safe(prefix: str, value: Any) -> dict[str, Any]:
     flattened: dict[str, Any] = {}
+    if _is_sensitive_attribute_key(prefix):
+        flattened[prefix] = REDACTED_ATTRIBUTE_VALUE
+        return flattened
     if isinstance(value, dict):
         for key, inner in value.items():
-            flattened.update(_flatten(f"{prefix}.{key}", inner))
+            flattened.update(_flatten_safe(f"{prefix}.{key}", inner))
         return flattened
     if isinstance(value, list):
         for index, inner in enumerate(value):
-            flattened.update(_flatten(f"{prefix}[{index}]", inner))
+            flattened.update(_flatten_safe(f"{prefix}[{index}]", inner))
         return flattened
     flattened[prefix] = value
     return flattened
+
+
+def _is_sensitive_attribute_key(key: str) -> bool:
+    normalized = key.lower()
+    return any(part in normalized for part in SENSITIVE_ATTRIBUTE_KEY_PARTS)

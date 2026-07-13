@@ -4,6 +4,7 @@ import asyncio
 import logging
 from collections.abc import Mapping
 from typing import Any
+from urllib.parse import urlsplit, urlunsplit
 
 from aiohttp import ClientError, ClientResponse, ClientSession
 
@@ -36,6 +37,28 @@ class EvchargoApiError(EvchargoError):
     """API request failed."""
 
 
+def normalize_base_url(base_url: str) -> str:
+    """Return a sanitized Evchargo API base URL."""
+    parsed = urlsplit(base_url.strip())
+    if parsed.scheme.lower() != "https" or not parsed.netloc:
+        raise EvchargoApiError("Evchargo base URL must be an HTTPS URL")
+    if parsed.username or parsed.password:
+        raise EvchargoApiError("Evchargo base URL must not contain credentials")
+    if parsed.query or parsed.fragment:
+        raise EvchargoApiError(
+            "Evchargo base URL must not contain query or fragment parts"
+        )
+    return urlunsplit(
+        (
+            parsed.scheme.lower(),
+            parsed.netloc.lower(),
+            parsed.path.rstrip("/"),
+            "",
+            "",
+        )
+    )
+
+
 class EvchargoApi:
     """Async Evchargo API client for the confirmed app endpoints."""
 
@@ -53,7 +76,7 @@ class EvchargoApi:
         self._session = session
         self._username = username
         self._password = password
-        self._base_url = base_url.rstrip("/")
+        self._base_url = normalize_base_url(base_url)
         self._device_id = device_id
         self._language = language
         self._timezone = timezone
@@ -126,6 +149,11 @@ class EvchargoApi:
                 f"Unexpected non-JSON response from {method} {path} "
                 f"(HTTP {response.status}): {text[:200]}"
             ) from err
+        if not isinstance(payload, dict):
+            raise EvchargoApiError(
+                f"Unexpected JSON response from {method} {path} "
+                f"(HTTP {response.status}): {type(payload).__name__}"
+            )
 
         if _LOGGER.isEnabledFor(logging.DEBUG):
             _LOGGER.debug(

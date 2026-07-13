@@ -8,8 +8,13 @@ import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.const import CONF_PASSWORD, CONF_USERNAME
 from homeassistant.helpers.aiohttp_client import async_create_clientsession
+from homeassistant.helpers.selector import (
+    TextSelector,
+    TextSelectorConfig,
+    TextSelectorType,
+)
 
-from .api import EvchargoApi, EvchargoApiError, EvchargoAuthError
+from .api import EvchargoApi, EvchargoApiError, EvchargoAuthError, normalize_base_url
 from .const import (
     CONF_BASE_URL,
     CONF_CHARGER_ID,
@@ -31,14 +36,34 @@ def _build_user_schema(defaults: dict[str, Any] | None = None) -> vol.Schema:
     return vol.Schema(
         {
             vol.Required(CONF_USERNAME, default=defaults.get(CONF_USERNAME, "")): str,
-            vol.Required(CONF_PASSWORD, default=defaults.get(CONF_PASSWORD, "")): str,
-            vol.Required(CONF_CHARGER_ID, default=defaults.get(CONF_CHARGER_ID, "")): str,
-            vol.Optional(CONF_BASE_URL, default=defaults.get(CONF_BASE_URL, DEFAULT_BASE_URL)): str,
-            vol.Optional(CONF_DEVICE_ID, default=defaults.get(CONF_DEVICE_ID, DEFAULT_DEVICE_ID)): str,
+            vol.Required(
+                CONF_PASSWORD,
+                default=defaults.get(CONF_PASSWORD, ""),
+            ): TextSelector(TextSelectorConfig(type=TextSelectorType.PASSWORD)),
+            vol.Required(
+                CONF_CHARGER_ID,
+                default=defaults.get(CONF_CHARGER_ID, ""),
+            ): str,
+            vol.Optional(
+                CONF_BASE_URL,
+                default=defaults.get(CONF_BASE_URL, DEFAULT_BASE_URL),
+            ): str,
+            vol.Optional(
+                CONF_DEVICE_ID,
+                default=defaults.get(CONF_DEVICE_ID, DEFAULT_DEVICE_ID),
+            ): str,
             vol.Optional(
                 CONF_SCAN_INTERVAL,
-                default=int(defaults.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL_SECONDS)),
-            ): vol.All(vol.Coerce(int), vol.Range(min=MIN_SCAN_INTERVAL_SECONDS, max=MAX_SCAN_INTERVAL_SECONDS)),
+                default=int(
+                    defaults.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL_SECONDS)
+                ),
+            ): vol.All(
+                vol.Coerce(int),
+                vol.Range(
+                    min=MIN_SCAN_INTERVAL_SECONDS,
+                    max=MAX_SCAN_INTERVAL_SECONDS,
+                ),
+            ),
         }
     )
 
@@ -49,8 +74,16 @@ def _build_options_schema(options: dict[str, Any] | None = None) -> vol.Schema:
         {
             vol.Optional(
                 CONF_SCAN_INTERVAL,
-                default=int(options.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL_SECONDS)),
-            ): vol.All(vol.Coerce(int), vol.Range(min=MIN_SCAN_INTERVAL_SECONDS, max=MAX_SCAN_INTERVAL_SECONDS))
+                default=int(
+                    options.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL_SECONDS)
+                ),
+            ): vol.All(
+                vol.Coerce(int),
+                vol.Range(
+                    min=MIN_SCAN_INTERVAL_SECONDS,
+                    max=MAX_SCAN_INTERVAL_SECONDS,
+                ),
+            )
         }
     )
 
@@ -65,6 +98,9 @@ class EvchargoConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         if user_input is not None:
             try:
+                user_input[CONF_BASE_URL] = normalize_base_url(
+                    user_input.get(CONF_BASE_URL, DEFAULT_BASE_URL)
+                )
                 title = await self._async_validate_input(user_input)
             except EvchargoAuthError:
                 errors["base"] = "invalid_auth"
