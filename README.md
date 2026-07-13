@@ -83,6 +83,8 @@ This project was developed with AI assistance for code generation, refactoring, 
 
 ```text
 custom_components/evchargo/
+custom_components/evchargo/icon.png
+custom_components/evchargo/logo.png
 brands/evchargo/
 hacs.json
 README.md
