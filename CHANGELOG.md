@@ -1,7 +1,7 @@
 # Changelog
 
 ## Unreleased
-- no unreleased changes
+- treat Evchargo stop responses with API code `5014` / `Processing, please wait` as a failed/incomplete stop again so the minimum-current fallback can still reduce charging load
 
 ## 2026.7.14.2
 - show `Not charging` instead of a stale Evchargo `Charging` status when the charger explicitly reports `cpInCharging: false`

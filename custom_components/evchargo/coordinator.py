@@ -76,7 +76,7 @@ class EvchargoDataUpdateCoordinator(DataUpdateCoordinator[dict]):
         except EvchargoApiError as err:
             if _is_completed_stop_response(err):
                 _LOGGER.info(
-                    "Treating Evchargo stop as complete because the backend reports no active or already-processing stop request"
+                    "Treating Evchargo stop as complete because the backend reports no active charging record"
                 )
                 self._charging_enabled = False
                 self._last_start_requested_at = None
@@ -215,10 +215,6 @@ def _coerce_int(value: Any) -> int | None:
 
 def _is_completed_stop_response(err: EvchargoApiError) -> bool:
     message = str(err).lower()
-    missing_record = (
+    return (
         "api code 80014" in message and "records does not exist" in message
     )
-    stop_processing = (
-        "api code 5014" in message and "processing, please wait" in message
-    )
-    return missing_record or stop_processing
