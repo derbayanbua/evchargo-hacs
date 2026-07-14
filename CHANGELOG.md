@@ -1,7 +1,11 @@
 # Changelog
 
 ## Unreleased
+- no unreleased changes
+
+## 2026.7.14.1
 - treat Evchargo stop responses with API code `80014` / `Records does not exist` as an already-stopped charger state instead of surfacing a Home Assistant error or forcing a current-limit fallback
+- treat Evchargo stop responses with API code `5014` / `Processing, please wait` as an in-progress stop instead of surfacing a Home Assistant error or forcing a current-limit fallback
 
 ## 2026.7.13.1
 - added integration-local icon/logo assets so HACS installs the Evchargo icon with the custom component
