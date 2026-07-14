@@ -42,11 +42,11 @@ BINARY_SENSORS: tuple[EvchargoBinarySensorDescription, ...] = (
         device_class=BinarySensorDeviceClass.PLUG,
         value_fn=lambda data: first_value(
             data,
-            "detail.existsActiveAppointment",
             "detail.isPlugged",
             "detail.plugged",
             "detail.connected",
             "detail.connectorPlugged",
+            "detail.inOccupied",
         ),
     ),
     EvchargoBinarySensorDescription(

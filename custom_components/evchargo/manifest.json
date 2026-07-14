@@ -1,7 +1,7 @@
 {
   "domain": "evchargo",
   "name": "Evchargo",
-  "version": "2026.7.14.1",
+  "version": "2026.7.14.2",
   "config_flow": true,
   "documentation": "https://github.com/derbayanbua/evchargo-hacs#readme",
   "issue_tracker": "https://github.com/derbayanbua/evchargo-hacs/issues",

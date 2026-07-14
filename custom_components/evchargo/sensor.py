@@ -27,6 +27,7 @@ from .const import (
     EXPERIMENTAL_CONTROLS,
     SERVICE_CONTROLS,
 )
+from .coordinator import _coerce_bool
 from .entity import EvchargoCoordinatorEntity
 from .value import first_float, first_value
 
@@ -66,14 +67,7 @@ SENSORS: tuple[EvchargoSensorDescription, ...] = (
     EvchargoSensorDescription(
         key="status",
         translation_key="status",
-        value_fn=lambda data: first_value(
-            data,
-            "detail.runStatus",
-            "detail.status",
-            "detail.cpStatus",
-            "detail.chargeStatus",
-            "detail.state",
-        ),
+        value_fn=lambda data: _charging_aware_status(data),
         extra_attributes=True,
     ),
     EvchargoSensorDescription(
@@ -217,6 +211,30 @@ SENSORS: tuple[EvchargoSensorDescription, ...] = (
         ),
     ),
 )
+
+
+def _charging_aware_status(data: dict[str, Any]) -> Any:
+    """Avoid showing stale cloud status as active charging."""
+    status = first_value(
+        data,
+        "detail.runStatus",
+        "detail.status",
+        "detail.cpStatus",
+        "detail.chargeStatus",
+        "detail.state",
+    )
+    charging = _coerce_bool(
+        first_value(
+            data,
+            "detail.cpInCharging",
+            "detail.isCharging",
+            "detail.charging",
+            "detail.inCharging",
+        )
+    )
+    if charging is False and str(status).strip().lower() == "charging":
+        return "Not charging"
+    return status
 
 
 async def async_setup_entry(

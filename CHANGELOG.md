@@ -3,6 +3,10 @@
 ## Unreleased
 - no unreleased changes
 
+## 2026.7.14.2
+- show `Not charging` instead of a stale Evchargo `Charging` status when the charger explicitly reports `cpInCharging: false`
+- stop using `existsActiveAppointment` as the preferred source for the plugged-in sensor so appointments are not shown as cable state
+
 ## 2026.7.14.1
 - treat Evchargo stop responses with API code `80014` / `Records does not exist` as an already-stopped charger state instead of surfacing a Home Assistant error or forcing a current-limit fallback
 - treat Evchargo stop responses with API code `5014` / `Processing, please wait` as an in-progress stop instead of surfacing a Home Assistant error or forcing a current-limit fallback
