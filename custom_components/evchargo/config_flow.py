@@ -19,9 +19,11 @@ from .const import (
     CONF_BASE_URL,
     CONF_CHARGER_ID,
     CONF_DEVICE_ID,
+    CONF_EXPOSE_SENSITIVE_ATTRIBUTES,
     CONF_SCAN_INTERVAL,
     DEFAULT_BASE_URL,
     DEFAULT_DEVICE_ID,
+    DEFAULT_EXPOSE_SENSITIVE_ATTRIBUTES,
     DEFAULT_SCAN_INTERVAL_SECONDS,
     DOMAIN,
     MAX_SCAN_INTERVAL_SECONDS,
@@ -83,7 +85,16 @@ def _build_options_schema(options: dict[str, Any] | None = None) -> vol.Schema:
                     min=MIN_SCAN_INTERVAL_SECONDS,
                     max=MAX_SCAN_INTERVAL_SECONDS,
                 ),
-            )
+            ),
+            vol.Optional(
+                CONF_EXPOSE_SENSITIVE_ATTRIBUTES,
+                default=bool(
+                    options.get(
+                        CONF_EXPOSE_SENSITIVE_ATTRIBUTES,
+                        DEFAULT_EXPOSE_SENSITIVE_ATTRIBUTES,
+                    )
+                ),
+            ): bool,
         }
     )
 
@@ -93,7 +104,10 @@ class EvchargoConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     VERSION = 1
 
-    async def async_step_user(self, user_input: dict[str, Any] | None = None):
+    async def async_step_user(
+        self,
+        user_input: dict[str, Any] | None = None,
+    ):
         errors: dict[str, str] = {}
 
         if user_input is not None:
@@ -159,11 +173,19 @@ class EvchargoOptionsFlow(config_entries.OptionsFlow):
         if user_input is not None:
             return self.async_create_entry(title="", data=user_input)
 
-        current_value = self._config_entry.options.get(
-            CONF_SCAN_INTERVAL,
-            self._config_entry.data.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL_SECONDS),
-        )
+        current = {
+            CONF_SCAN_INTERVAL: self._config_entry.options.get(
+                CONF_SCAN_INTERVAL,
+                self._config_entry.data.get(
+                    CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL_SECONDS
+                ),
+            ),
+            CONF_EXPOSE_SENSITIVE_ATTRIBUTES: self._config_entry.options.get(
+                CONF_EXPOSE_SENSITIVE_ATTRIBUTES,
+                DEFAULT_EXPOSE_SENSITIVE_ATTRIBUTES,
+            ),
+        }
         return self.async_show_form(
             step_id="init",
-            data_schema=_build_options_schema({CONF_SCAN_INTERVAL: current_value}),
+            data_schema=_build_options_schema(current),
         )

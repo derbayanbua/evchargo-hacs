@@ -24,6 +24,8 @@ from .__init__ import EvchargoConfigEntry
 from .const import (
     ATTR_EXPERIMENTAL_CONTROLS,
     ATTR_SETTABLE_CONTROLS,
+    CONF_EXPOSE_SENSITIVE_ATTRIBUTES,
+    DEFAULT_EXPOSE_SENSITIVE_ATTRIBUTES,
     EXPERIMENTAL_CONTROLS,
     SERVICE_CONTROLS,
 )
@@ -265,18 +267,58 @@ class EvchargoSensor(EvchargoCoordinatorEntity, SensorEntity):
     def extra_state_attributes(self) -> dict[str, Any] | None:
         if not self.entity_description.extra_attributes:
             return None
-        return _build_status_attributes(self.coordinator.data)
+        expose_sensitive = self.coordinator.config_entry.options.get(
+            CONF_EXPOSE_SENSITIVE_ATTRIBUTES, DEFAULT_EXPOSE_SENSITIVE_ATTRIBUTES
+        )
+        return _build_status_attributes(self.coordinator.data, expose_sensitive)
 
 
-def _build_status_attributes(data: dict[str, Any]) -> dict[str, Any]:
+SENSITIVE_COUNT_BLOBS = {
+    "rfid_cp_list": "rfid_card_count",
+    "auth_user_list": "authorized_user_count",
+    "home_users": "home_user_count",
+}
+
+ALL_STATUS_ATTRIBUTE_SOURCES = (
+    "user_info",
+    "detail",
+    "cp_list",
+    "cp_list_alt",
+    "home_users",
+    "rfid_cp_list",
+    "auth_user_list",
+    "firmware_info",
+    "upgrade_status",
+    "lbc_and_pv",
+    "rate",
+    "platforms",
+    "payment_config",
+)
+
+
+def _build_status_attributes(
+    data: dict[str, Any], expose_sensitive: bool = False
+) -> dict[str, Any]:
     attrs: dict[str, Any] = {
         ATTR_SETTABLE_CONTROLS: SERVICE_CONTROLS,
         ATTR_EXPERIMENTAL_CONTROLS: EXPERIMENTAL_CONTROLS,
     }
+
+    if expose_sensitive:
+        for key in ALL_STATUS_ATTRIBUTE_SOURCES:
+            value = data.get(key)
+            if value is not None:
+                attrs.update(_flatten(key, value))
+        return attrs
+
     for key in SAFE_STATUS_ATTRIBUTE_SOURCES:
         value = data.get(key)
         if value is not None:
             attrs.update(_flatten_safe(key, value))
+    for key, attr_name in SENSITIVE_COUNT_BLOBS.items():
+        value = data.get(key)
+        if value is not None:
+            attrs[attr_name] = _count_records(value)
     return attrs
 
 
@@ -295,6 +337,31 @@ def _flatten_safe(prefix: str, value: Any) -> dict[str, Any]:
         return flattened
     flattened[prefix] = value
     return flattened
+
+
+def _flatten(prefix: str, value: Any) -> dict[str, Any]:
+    flattened: dict[str, Any] = {}
+    if isinstance(value, dict):
+        for key, inner in value.items():
+            flattened.update(_flatten(f"{prefix}.{key}", inner))
+        return flattened
+    if isinstance(value, list):
+        for index, inner in enumerate(value):
+            flattened.update(_flatten(f"{prefix}[{index}]", inner))
+        return flattened
+    flattened[prefix] = value
+    return flattened
+
+
+def _count_records(value: Any) -> int:
+    if isinstance(value, list):
+        return len(value)
+    if isinstance(value, dict):
+        for inner_key in ("records", "list", "rows", "data"):
+            inner = value.get(inner_key)
+            if isinstance(inner, list):
+                return len(inner)
+    return 0
 
 
 def _is_sensitive_attribute_key(key: str) -> bool:

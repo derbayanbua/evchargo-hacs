@@ -16,7 +16,8 @@
     },
     "error": {
       "invalid_auth": "Authentication failed",
-      "cannot_connect": "Unable to connect to Evchargo"
+      "cannot_connect": "Unable to connect to Evchargo",
+      "invalid_base_url": "The base URL must start with https://"
     },
     "abort": {
       "already_configured": "This charger is already configured"
@@ -28,7 +29,11 @@
         "title": "Evchargo options",
         "description": "Set how often the integration refreshes charger status (30-240 seconds).",
         "data": {
-          "scan_interval": "Polling interval in seconds"
+          "scan_interval": "Polling interval in seconds",
+          "expose_sensitive_attributes": "Expose sensitive attributes"
+        },
+        "data_description": {
+          "expose_sensitive_attributes": "When enabled, RFID card IDs, authorized-user records and payment config are published as raw entity attributes (readable by all Home Assistant users and stored in backups). Leave off to publish only counts."
         }
       }
     }

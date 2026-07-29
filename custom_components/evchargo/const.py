@@ -22,6 +22,8 @@ CONF_BASE_URL = "base_url"
 CONF_CHARGER_ID = "charger_id"
 CONF_DEVICE_ID = "device_id"
 CONF_SCAN_INTERVAL = "scan_interval"
+CONF_EXPOSE_SENSITIVE_ATTRIBUTES = "expose_sensitive_attributes"
+DEFAULT_EXPOSE_SENSITIVE_ATTRIBUTES = False
 
 PLATFORMS: list[Platform] = [
     Platform.SENSOR,

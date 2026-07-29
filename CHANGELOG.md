@@ -18,6 +18,7 @@
 - restricted custom API base URLs to sanitized HTTPS URLs without embedded credentials
 - changed the config-flow password field to a password selector
 - limited status-sensor attributes to sanitized operational diagnostics instead of exposing raw account, user, RFID, auth, or payment payloads
+- added an opt-in option to expose sensitive status attributes; by default sensitive lists are reduced to counts and PII leaves remain redacted
 - hardened API response parsing for unexpected JSON shapes
 
 ## 2026.7.11.1
