@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 2026.7.30.1
 - documented and hardened the `vasililiev/main` privacy merge: sensitive status attributes remain disabled by default, raw RFID/auth/user/payment payloads require explicit opt-in, and debug/error paths no longer expose session order IDs or non-JSON response bodies
 - treat Evchargo stop responses with API code `5014` / `Processing, please wait` as a failed/incomplete stop again so the minimum-current fallback can still reduce charging load
 
