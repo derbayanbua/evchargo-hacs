@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import re
 from collections.abc import Mapping
 from typing import Any
 from urllib.parse import urlsplit, urlunsplit
@@ -22,7 +23,16 @@ _LOGGER = logging.getLogger(__name__)
 SUCCESS_CODE = 2000
 AUTH_ERROR_CODES = {4001, 4010, 4401, 4402, 80114}
 CHARGER_ID_KEYS = ("cpId", "chargerId", "id", "pileId")
-SENSITIVE_KEYS = {"password", "token", "satoken", "authorization", "email"}
+SENSITIVE_KEY_PARTS = (
+    "authorization",
+    "chargeorderid",
+    "chargingorderid",
+    "email",
+    "orderid",
+    "password",
+    "satoken",
+    "token",
+)
 
 
 class EvchargoError(Exception):
@@ -147,7 +157,7 @@ class EvchargoApi:
             text = await response.text()
             raise EvchargoApiError(
                 f"Unexpected non-JSON response from {method} {path} "
-                f"(HTTP {response.status}): {text[:200]}"
+                f"(HTTP {response.status}, body length {len(text)}; body omitted)"
             ) from err
         if not isinstance(payload, dict):
             raise EvchargoApiError(
@@ -406,7 +416,7 @@ class EvchargoApi:
                     "Charge action variant failed (%s %s %s): %s",
                     action,
                     method,
-                    kwargs,
+                    _sanitize_mapping(kwargs),
                     err,
                 )
         raise EvchargoApiError(f"Unable to {action} charging: {last_error}")
@@ -456,12 +466,24 @@ def _sanitize_mapping(value: Mapping[str, Any] | None) -> dict[str, Any] | None:
         return None
     sanitized: dict[str, Any] = {}
     for key, inner in value.items():
-        if key.lower() in SENSITIVE_KEYS:
+        if _is_sensitive_key(key):
             sanitized[key] = "***"
         else:
-            sanitized[key] = inner
+            sanitized[key] = _sanitize_value(inner)
     return sanitized
 
+
+def _sanitize_value(value: Any) -> Any:
+    if isinstance(value, Mapping):
+        return _sanitize_mapping(value)
+    if isinstance(value, list):
+        return [_sanitize_value(item) for item in value]
+    return value
+
+
+def _is_sensitive_key(key: str) -> bool:
+    normalized = re.sub(r"[^a-z0-9]", "", key.lower())
+    return any(part in normalized for part in SENSITIVE_KEY_PARTS)
 
 
 def _summarize_payload(payload: dict[str, Any]) -> dict[str, Any]:
