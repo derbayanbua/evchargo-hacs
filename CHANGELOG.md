@@ -6,6 +6,7 @@
 - the power sensor now derives kW from session-energy growth when the cloud reports `0`/`null` power while charging, and reports `0` when the charger is not charging
 - the charging switch now holds the requested state for up to 3 minutes after start/stop instead of flipping back on the next stale cloud refresh, with 15-second polling until the charger confirms
 - treat stop responses with API code `5014` / `Processing, please wait` as an in-progress stop again instead of immediately cutting the current to the minimum; stop retrying other payload variants once the backend returns `5014` or `80014`
+- moved the icon and logo into `custom_components/evchargo/brand/` (with 256 px and `@2x` 512 px variants) so Home Assistant 2026.3+ actually displays them
 - start/stop, current-limit, refresh, and re-authenticate failures are raised as Home Assistant errors so the actual message is shown in the UI instead of "Unknown error"
 
 ## 2026.7.30.1

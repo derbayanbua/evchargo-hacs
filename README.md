@@ -76,6 +76,7 @@ Only non-private operational diagnostics are exposed as Home Assistant state att
 - API errors include the HTTP method, endpoint, HTTP status, Evchargo API code, and backend message where available.
 - Use the diagnostic re-authenticate button when the cloud token appears stale without needing to reload the full integration.
 - When the charger no longer reports active charging, the integration clears the HA charging switch state without sending another stop command, because the Evchargo API can reject that stale stop with `Records does not exist`.
+- The integration icon and logo ship in `custom_components/evchargo/brand/` and are shown by Home Assistant 2026.3 or newer after a restart (hard-refresh the browser if the old placeholder is cached). The HACS store view may still show no icon, because HACS fetches icons from its own source.
 - Additional writable charger options seen in APK traces should be treated as experimental until their payloads are verified more thoroughly.
 
 ## AI disclaimer
@@ -86,8 +87,7 @@ This project was developed with AI assistance for code generation, refactoring, 
 
 ```text
 custom_components/evchargo/
-custom_components/evchargo/icon.png
-custom_components/evchargo/logo.png
+custom_components/evchargo/brand/   # icon/logo served locally by Home Assistant 2026.3+
 brands/evchargo/
 hacs.json
 README.md
