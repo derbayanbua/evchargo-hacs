@@ -419,6 +419,8 @@ class EvchargoApi:
                     _sanitize_mapping(kwargs),
                     err,
                 )
+                if _is_definitive_charge_action_error(err):
+                    break
         raise EvchargoApiError(f"Unable to {action} charging: {last_error}")
 
     def _merge_charger_detail(
@@ -459,6 +461,15 @@ class EvchargoApi:
                 if value is not None and str(value) == str(charger_id):
                     return item
         return None
+
+
+DEFINITIVE_CHARGE_ACTION_CODES = ("api code 5014:", "api code 80014:")
+
+
+def _is_definitive_charge_action_error(err: Exception) -> bool:
+    """Return True when the backend understood the request, so other payload variants are pointless."""
+    message = str(err).lower()
+    return any(code in message for code in DEFINITIVE_CHARGE_ACTION_CODES)
 
 
 def _sanitize_mapping(value: Mapping[str, Any] | None) -> dict[str, Any] | None:

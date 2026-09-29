@@ -33,6 +33,8 @@ It has been tested with the charger model **AC011K-AU-25**.
 - Diagnostic buttons for manual refresh and forced re-authentication
 - Additional diagnostic sensors for current limits, active charge order ID, latest firmware, plugged-in state, and online state
 - Main status sensor with sanitized operational attributes from the confirmed app endpoints
+- Energy sensors usable in the Energy dashboard and long-term statistics: `Session energy` (resets per session) and `Total charged energy` (lifetime total accumulated across sessions and restarts)
+- Power sensor that falls back to a value derived from session-energy growth when the cloud reports no usable power reading
 
 ### Exposed data
 
@@ -69,7 +71,8 @@ Only non-private operational diagnostics are exposed as Home Assistant state att
 - Trusted-device verification is not implemented yet.
 - Only the practically confirmed write actions are exposed right now: charging on/off and current limit.
 - Status polling is configurable between 30 and 240 seconds, with a default of 60 seconds.
-- Switch, start/stop button, and current-limit changes are executed immediately and then refreshed right away.
+- Switch, start/stop button, and current-limit changes are executed immediately. After a start/stop command the switch holds the requested state for up to 3 minutes while the Evchargo cloud catches up, and polling temporarily speeds up to every 15 seconds.
+- For charged-energy history, use `Total charged energy` in the Energy dashboard or a utility meter helper instead of integrating the power sensor.
 - API errors include the HTTP method, endpoint, HTTP status, Evchargo API code, and backend message where available.
 - Use the diagnostic re-authenticate button when the cloud token appears stale without needing to reload the full integration.
 - When the charger no longer reports active charging, the integration clears the HA charging switch state without sending another stop command, because the Evchargo API can reject that stale stop with `Records does not exist`.

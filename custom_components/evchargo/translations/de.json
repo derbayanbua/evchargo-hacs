@@ -70,6 +70,9 @@
       },
       "latest_firmware": {
         "name": "Neueste Firmware"
+      },
+      "total_energy": {
+        "name": "Gesamt geladene Energie"
       }
     },
     "binary_sensor": {

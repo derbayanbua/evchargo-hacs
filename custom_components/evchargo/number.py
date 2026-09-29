@@ -5,9 +5,11 @@ from typing import Any
 from homeassistant.components.number import NumberEntity, NumberMode
 from homeassistant.const import UnitOfElectricCurrent
 from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .__init__ import EvchargoConfigEntry
+from .api import EvchargoError
 from .entity import EvchargoCoordinatorEntity
 from .value import first_float, first_value
 
@@ -104,8 +106,11 @@ class EvchargoCurrentLimitNumber(EvchargoCoordinatorEntity, NumberEntity):
             step=self.native_step,
             allowed_values=_allowed_current_values(self.coordinator.data),
         )
-        await self.coordinator.api.async_set_current_limit(self._charger_id, current)
-        await self.coordinator.async_refresh()
+        try:
+            await self.coordinator.api.async_set_current_limit(self._charger_id, current)
+        except EvchargoError as err:
+            raise HomeAssistantError(str(err)) from err
+        await self.coordinator.async_request_refresh()
 
 
 def _allowed_current_values(data: dict[str, Any]) -> list[float]:

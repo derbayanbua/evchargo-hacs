@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026.9.29.1
+- fixed `Session energy` using state class `measurement`, which Home Assistant rejects for energy sensors; it is now `total_increasing` and keeps its last value between sessions, so it records long-term statistics
+- added a `Total charged energy` sensor that accumulates energy across sessions (persisted across restarts) for the Energy dashboard and utility meters
+- the power sensor now derives kW from session-energy growth when the cloud reports `0`/`null` power while charging, and reports `0` when the charger is not charging
+- the charging switch now holds the requested state for up to 3 minutes after start/stop instead of flipping back on the next stale cloud refresh, with 15-second polling until the charger confirms
+- treat stop responses with API code `5014` / `Processing, please wait` as an in-progress stop again instead of immediately cutting the current to the minimum; stop retrying other payload variants once the backend returns `5014` or `80014`
+- start/stop, current-limit, refresh, and re-authenticate failures are raised as Home Assistant errors so the actual message is shown in the UI instead of "Unknown error"
+
 ## 2026.7.30.1
 - documented and hardened the `vasililiev/main` privacy merge: sensitive status attributes remain disabled by default, raw RFID/auth/user/payment payloads require explicit opt-in, and debug/error paths no longer expose session order IDs or non-JSON response bodies
 - treat Evchargo stop responses with API code `5014` / `Processing, please wait` as a failed/incomplete stop again so the minimum-current fallback can still reduce charging load
