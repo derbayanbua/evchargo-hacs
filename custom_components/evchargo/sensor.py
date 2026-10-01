@@ -2,12 +2,15 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from dataclasses import dataclass
+import hashlib
 from typing import Any
 
 from homeassistant.components.sensor import (
+    RestoreSensor,
     SensorDeviceClass,
     SensorEntity,
     SensorEntityDescription,
+    SensorExtraStoredData,
     SensorStateClass,
 )
 from homeassistant.const import (
@@ -17,7 +20,7 @@ from homeassistant.const import (
     UnitOfEnergy,
     UnitOfPower,
 )
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .__init__ import EvchargoConfigEntry
@@ -29,7 +32,7 @@ from .const import (
     EXPERIMENTAL_CONTROLS,
     SERVICE_CONTROLS,
 )
-from .coordinator import _coerce_bool
+from .coordinator import DERIVED_POWER_KEY, SESSION_ENERGY_PATHS, _coerce_bool
 from .entity import EvchargoCoordinatorEntity
 from .value import first_float, first_value
 
@@ -63,6 +66,7 @@ REDACTED_ATTRIBUTE_VALUE = "***"
 class EvchargoSensorDescription(SensorEntityDescription):
     value_fn: Callable[[dict[str, Any]], Any]
     extra_attributes: bool = False
+    keep_last_value: bool = False
 
 
 SENSORS: tuple[EvchargoSensorDescription, ...] = (
@@ -78,14 +82,7 @@ SENSORS: tuple[EvchargoSensorDescription, ...] = (
         device_class=SensorDeviceClass.POWER,
         native_unit_of_measurement=UnitOfPower.KILO_WATT,
         state_class=SensorStateClass.MEASUREMENT,
-        value_fn=lambda data: first_float(
-            data,
-            "detail.chargingData.power",
-            "detail.chargingData.ratePower",
-            "detail.power",
-            "detail.ratePower",
-            "detail.kwPower",
-        ),
+        value_fn=lambda data: _power(data),
     ),
     EvchargoSensorDescription(
         key="current",
@@ -117,14 +114,9 @@ SENSORS: tuple[EvchargoSensorDescription, ...] = (
         translation_key="session_energy",
         device_class=SensorDeviceClass.ENERGY,
         native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
-        state_class=SensorStateClass.MEASUREMENT,
-        value_fn=lambda data: first_float(
-            data,
-            "detail.chargingData.energy",
-            "detail.energy",
-            "detail.sessionEnergy",
-            "detail.kwh",
-        ),
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        keep_last_value=True,
+        value_fn=lambda data: first_float(data, *SESSION_ENERGY_PATHS),
     ),
     EvchargoSensorDescription(
         key="current_limit_state",
@@ -215,6 +207,24 @@ SENSORS: tuple[EvchargoSensorDescription, ...] = (
 )
 
 
+def _power(data: dict[str, Any]) -> float | None:
+    """Prefer reported power, falling back to power derived from energy growth."""
+    reported = first_float(
+        data,
+        "detail.chargingData.power",
+        "detail.chargingData.ratePower",
+        "detail.power",
+        "detail.ratePower",
+        "detail.kwPower",
+    )
+    if reported is not None and reported > 0:
+        return reported
+    derived = data.get(DERIVED_POWER_KEY)
+    if derived is not None:
+        return derived
+    return reported
+
+
 def _charging_aware_status(data: dict[str, Any]) -> Any:
     """Avoid showing stale cloud status as active charging."""
     status = first_value(
@@ -245,9 +255,11 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     coordinator = entry.runtime_data.coordinator
-    async_add_entities(
+    entities: list[SensorEntity] = [
         EvchargoSensor(coordinator, description) for description in SENSORS
-    )
+    ]
+    entities.append(EvchargoTotalEnergySensor(coordinator))
+    async_add_entities(entities)
 
 
 class EvchargoSensor(EvchargoCoordinatorEntity, SensorEntity):
@@ -258,10 +270,16 @@ class EvchargoSensor(EvchargoCoordinatorEntity, SensorEntity):
         self.entity_description = description
         self._attr_unique_id = f"{self._charger_id}_{description.key}"
         self._attr_translation_key = description.translation_key
+        self._last_value: Any = None
 
     @property
     def native_value(self) -> Any:
-        return self.entity_description.value_fn(self.coordinator.data)
+        value = self.entity_description.value_fn(self.coordinator.data)
+        if not self.entity_description.keep_last_value:
+            return value
+        if value is not None:
+            self._last_value = value
+        return self._last_value
 
     @property
     def extra_state_attributes(self) -> dict[str, Any] | None:
@@ -271,6 +289,108 @@ class EvchargoSensor(EvchargoCoordinatorEntity, SensorEntity):
             CONF_EXPOSE_SENSITIVE_ATTRIBUTES, DEFAULT_EXPOSE_SENSITIVE_ATTRIBUTES
         )
         return _build_status_attributes(self.coordinator.data, expose_sensitive)
+
+
+class EvchargoTotalEnergyStoredData(SensorExtraStoredData):
+    """Restore data for the total energy sensor, including session tracking."""
+
+    def __init__(
+        self,
+        native_value: float | None,
+        native_unit_of_measurement: str | None,
+        session_key: str | None,
+        session_energy: float | None,
+    ) -> None:
+        super().__init__(native_value, native_unit_of_measurement)
+        self.session_key = session_key
+        self.session_energy = session_energy
+
+    def as_dict(self) -> dict[str, Any]:
+        data = super().as_dict()
+        data["session_key"] = self.session_key
+        data["session_energy"] = self.session_energy
+        return data
+
+
+class EvchargoTotalEnergySensor(EvchargoCoordinatorEntity, RestoreSensor):
+    """Lifetime charged energy accumulated from per-session energy readings."""
+
+    _attr_translation_key = "total_energy"
+    _attr_device_class = SensorDeviceClass.ENERGY
+    _attr_state_class = SensorStateClass.TOTAL_INCREASING
+    _attr_native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR
+    _attr_suggested_display_precision = 2
+
+    def __init__(self, coordinator) -> None:
+        super().__init__(coordinator)
+        self._attr_unique_id = f"{self._charger_id}_total_energy"
+        self._total: float = 0.0
+        self._session_key: str | None = None
+        self._session_energy: float | None = None
+
+    @property
+    def native_value(self) -> float:
+        return round(self._total, 3)
+
+    @property
+    def extra_restore_state_data(self) -> EvchargoTotalEnergyStoredData:
+        return EvchargoTotalEnergyStoredData(
+            self.native_value,
+            self.native_unit_of_measurement,
+            self._session_key,
+            self._session_energy,
+        )
+
+    async def async_added_to_hass(self) -> None:
+        await super().async_added_to_hass()
+        if (last := await self.async_get_last_extra_data()) is not None:
+            restored = last.as_dict()
+            self._total = _as_float(restored.get("native_value")) or 0.0
+            self._session_key = restored.get("session_key")
+            self._session_energy = _as_float(restored.get("session_energy"))
+        self._accumulate()
+
+    @callback
+    def _handle_coordinator_update(self) -> None:
+        self._accumulate()
+        super()._handle_coordinator_update()
+
+    def _accumulate(self) -> None:
+        data = self.coordinator.data or {}
+        energy = first_float(data, *SESSION_ENERGY_PATHS)
+        if energy is None or energy < 0:
+            return
+        session_key = _session_key(data)
+        previous = self._session_energy
+
+        new_session = (
+            session_key is not None and session_key != self._session_key
+        ) or previous is None or energy < previous
+        delta = energy if new_session else energy - previous
+
+        self._total += delta
+        self._session_energy = energy
+        if session_key is not None:
+            self._session_key = session_key
+
+
+def _session_key(data: dict[str, Any]) -> str | None:
+    order_id = first_value(
+        data,
+        "detail.chargingData.orderId",
+        "detail.orderId",
+        "detail.chargeOrderId",
+    )
+    if order_id is None:
+        return None
+    return hashlib.sha256(str(order_id).encode()).hexdigest()[:16]
+
+
+def _as_float(value: Any) -> float | None:
+    try:
+        return None if value is None else float(value)
+    except (TypeError, ValueError):
+        return None
 
 
 SENSITIVE_COUNT_BLOBS = {

@@ -7,9 +7,11 @@ from typing import Any
 from homeassistant.components.button import ButtonEntity, ButtonEntityDescription
 from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .__init__ import EvchargoConfigEntry
+from .api import EvchargoError
 from .entity import EvchargoCoordinatorEntity
 
 
@@ -80,4 +82,7 @@ class EvchargoButton(EvchargoCoordinatorEntity, ButtonEntity):
         self._attr_translation_key = description.translation_key
 
     async def async_press(self) -> None:
-        await self.entity_description.press_fn(self.coordinator)
+        try:
+            await self.entity_description.press_fn(self.coordinator)
+        except EvchargoError as err:
+            raise HomeAssistantError(str(err)) from err
