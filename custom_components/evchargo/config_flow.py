@@ -14,7 +14,13 @@ from homeassistant.helpers.selector import (
     TextSelectorType,
 )
 
-from .api import EvchargoApi, EvchargoApiError, EvchargoAuthError, normalize_base_url
+from .api import (
+    EvchargoApi,
+    EvchargoApiError,
+    EvchargoAuthError,
+    normalize_base_url,
+    normalize_charger_id,
+)
 from .const import (
     CONF_BASE_URL,
     CONF_CHARGER_ID,
@@ -45,7 +51,7 @@ def _build_user_schema(defaults: dict[str, Any] | None = None) -> vol.Schema:
             vol.Required(
                 CONF_CHARGER_ID,
                 default=defaults.get(CONF_CHARGER_ID, ""),
-            ): str,
+            ): vol.All(str, str.strip, vol.Length(min=1)),
             vol.Optional(
                 CONF_BASE_URL,
                 default=defaults.get(CONF_BASE_URL, DEFAULT_BASE_URL),
@@ -112,6 +118,9 @@ class EvchargoConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         if user_input is not None:
             try:
+                user_input[CONF_CHARGER_ID] = normalize_charger_id(
+                    user_input[CONF_CHARGER_ID]
+                )
                 user_input[CONF_BASE_URL] = normalize_base_url(
                     user_input.get(CONF_BASE_URL, DEFAULT_BASE_URL)
                 )

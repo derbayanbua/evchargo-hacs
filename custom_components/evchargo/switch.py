@@ -31,9 +31,14 @@ class EvchargoChargingSwitch(EvchargoCoordinatorEntity, SwitchEntity):
         return self.coordinator.charging_enabled is None
 
     @property
-    def is_on(self) -> bool:
-        state = self.coordinator.charging_enabled
-        return False if state is None else state
+    def is_on(self) -> bool | None:
+        return self.coordinator.charging_enabled
+
+    @property
+    def extra_state_attributes(self) -> dict[str, bool | None]:
+        return {
+            "requested_charging_enabled": self.coordinator.requested_charging_enabled,
+        }
 
     async def async_turn_on(self, **kwargs) -> None:
         await self.coordinator.async_set_charging_enabled(True)

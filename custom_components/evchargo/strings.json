@@ -1,4 +1,11 @@
 {
+  "entity": {
+    "sensor": {
+      "charging_state": {
+        "name": "Charging state"
+      }
+    }
+  },
   "config": {
     "step": {
       "user": {

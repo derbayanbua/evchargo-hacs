@@ -1,5 +1,22 @@
 # Evchargo API Reverse Engineering
 
+## Charging-state interpretation update (2026-10)
+
+The implementation now distinguishes vehicle connection, charging activity and
+charging permission. Observed `runStatus: Available` and `cpInCharging: false`
+support disconnected/inactive interpretation. The plug sensor and start guard
+share the same interpreter; billing `inOccupied` and cable-holder `connectorSeat`
+are not vehicle-connection evidence. `Preparing`, `SuspendedEV`, `SuspendedEVSE`
+and `Charging` are recognized OCPP-like names, not proof that every firmware uses
+that vocabulary. Unknown/fault/offline states and contradictions do not become
+valid A/B/C states. The older fallback lists below describe historical guesses.
+
+No verified enabled/authorization field is currently available. A successful
+start/stop response, inactive `cpInCharging` or existing order ID must not be
+treated as proof of charging permission. See the README for the new normalized
+sensor, unknown control-switch semantics and evcc limitations. No new live
+start/stop or vehicle wake-up behavior has been verified by this change.
+
 ## Status
 Draft created on 2026-05-22 from:
 - the HACS integration code in this repository

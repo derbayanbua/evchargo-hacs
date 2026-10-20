@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+- share conservative connection/activity interpretation between binary sensors, the start guard and a new normalized `Charging state` (`A`/`B`/`C`) sensor; preserve vendor status and raw diagnostic attributes
+- exclude billing occupancy and cable-holder state from vehicle-connection detection; keep unknown, offline, faulted and contradictory normalized states unknown
+- separate pending start/stop intent from observed activity and charging permission; expose unknown switch state instead of treating idle/suspended vehicles as disabled or API acknowledgements as proof of enablement
+- document evcc 0.317.2 status mappings, automatic kW-to-W conversion and the remaining lack of reliable authorization feedback; add offline regression tests
+
 ## 2026.9.29.1
 - fixed `Session energy` using state class `measurement`, which Home Assistant rejects for energy sensors; it is now `total_increasing` and keeps its last value between sessions, so it records long-term statistics
 - added a `Total charged energy` sensor that accumulates energy across sessions (persisted across restarts) for the Energy dashboard and utility meters
