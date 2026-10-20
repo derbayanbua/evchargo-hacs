@@ -38,6 +38,9 @@
       "status": {
         "name": "Status"
       },
+      "charging_state": {
+        "name": "Ladezustand"
+      },
       "power": {
         "name": "Leistung"
       },

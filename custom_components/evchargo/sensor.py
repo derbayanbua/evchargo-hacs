@@ -32,7 +32,13 @@ from .const import (
     EXPERIMENTAL_CONTROLS,
     SERVICE_CONTROLS,
 )
-from .coordinator import DERIVED_POWER_KEY, SESSION_ENERGY_PATHS, _coerce_bool
+from .charging_state import (
+    CHARGING_PATHS,
+    STATUS_PATHS,
+    coerce_bool,
+    interpret_charging_state,
+)
+from .coordinator import DERIVED_POWER_KEY, SESSION_ENERGY_PATHS
 from .entity import EvchargoCoordinatorEntity
 from .value import first_float, first_value
 
@@ -75,6 +81,13 @@ SENSORS: tuple[EvchargoSensorDescription, ...] = (
         translation_key="status",
         value_fn=lambda data: _charging_aware_status(data),
         extra_attributes=True,
+    ),
+    EvchargoSensorDescription(
+        key="charging_state",
+        translation_key="charging_state",
+        device_class=SensorDeviceClass.ENUM,
+        options=["A", "B", "C"],
+        value_fn=lambda data: interpret_charging_state(data).normalized,
     ),
     EvchargoSensorDescription(
         key="power",
@@ -227,23 +240,8 @@ def _power(data: dict[str, Any]) -> float | None:
 
 def _charging_aware_status(data: dict[str, Any]) -> Any:
     """Avoid showing stale cloud status as active charging."""
-    status = first_value(
-        data,
-        "detail.runStatus",
-        "detail.status",
-        "detail.cpStatus",
-        "detail.chargeStatus",
-        "detail.state",
-    )
-    charging = _coerce_bool(
-        first_value(
-            data,
-            "detail.cpInCharging",
-            "detail.isCharging",
-            "detail.charging",
-            "detail.inCharging",
-        )
-    )
+    status = first_value(data, *STATUS_PATHS)
+    charging = coerce_bool(first_value(data, *CHARGING_PATHS))
     if charging is False and str(status).strip().lower() == "charging":
         return "Not charging"
     return status

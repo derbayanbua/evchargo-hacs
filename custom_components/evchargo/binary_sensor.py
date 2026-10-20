@@ -14,7 +14,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .__init__ import EvchargoConfigEntry
-from .coordinator import _coerce_bool
+from .charging_state import coerce_bool, interpret_charging_state
 from .entity import EvchargoCoordinatorEntity
 from .value import first_value
 
@@ -28,26 +28,13 @@ BINARY_SENSORS: tuple[EvchargoBinarySensorDescription, ...] = (
     EvchargoBinarySensorDescription(
         key="charging",
         translation_key="charging",
-        value_fn=lambda data: first_value(
-            data,
-            "detail.cpInCharging",
-            "detail.isCharging",
-            "detail.charging",
-            "detail.inCharging",
-        ),
+        value_fn=lambda data: interpret_charging_state(data).charging,
     ),
     EvchargoBinarySensorDescription(
         key="plugged_in",
         translation_key="plugged_in",
         device_class=BinarySensorDeviceClass.PLUG,
-        value_fn=lambda data: first_value(
-            data,
-            "detail.isPlugged",
-            "detail.plugged",
-            "detail.connected",
-            "detail.connectorPlugged",
-            "detail.inOccupied",
-        ),
+        value_fn=lambda data: interpret_charging_state(data).plugged_in,
     ),
     EvchargoBinarySensorDescription(
         key="online",
@@ -109,4 +96,4 @@ class EvchargoBinarySensor(EvchargoCoordinatorEntity, BinarySensorEntity):
 
     @property
     def is_on(self) -> bool | None:
-        return _coerce_bool(self.entity_description.value_fn(self.coordinator.data))
+        return coerce_bool(self.entity_description.value_fn(self.coordinator.data))

@@ -43,6 +43,9 @@
       "status": {
         "name": "Status"
       },
+      "charging_state": {
+        "name": "Charging state"
+      },
       "power": {
         "name": "Power"
       },

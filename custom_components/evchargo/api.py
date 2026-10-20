@@ -69,6 +69,14 @@ def normalize_base_url(base_url: str) -> str:
     )
 
 
+def normalize_charger_id(charger_id: str) -> str:
+    """Trim surrounding whitespace and reject empty charger identifiers."""
+    normalized = charger_id.strip()
+    if not normalized:
+        raise EvchargoApiError("Charger ID must not be empty")
+    return normalized
+
+
 class EvchargoApi:
     """Async Evchargo API client for the confirmed app endpoints."""
 
@@ -279,6 +287,7 @@ class EvchargoApi:
             return None
 
     async def async_get_overview(self, charger_id: str) -> dict[str, Any]:
+        charger_id = normalize_charger_id(charger_id)
         detail = await self.async_get_json(f"/app/v1/home/cp/{charger_id}/detail")
         cp_list = await self.async_get_json("/app/v1/home/cp/list")
         user_info = await self.async_get_json("/app/v1/user/info")
@@ -348,6 +357,7 @@ class EvchargoApi:
         *,
         connector_num: int = 1,
     ) -> None:
+        charger_id = normalize_charger_id(charger_id)
         attempts: tuple[tuple[str, dict[str, Mapping[str, Any]]], ...] = (
             ("PUT", {"params": {"current": current}}),
             ("PUT", {"params": {"connectorNum": connector_num, "current": current}}),
@@ -381,6 +391,7 @@ class EvchargoApi:
         *,
         order_id: int | str | None = None,
     ) -> None:
+        charger_id = normalize_charger_id(charger_id)
         path = f"/app/v1/home/cp/{charger_id}/{action}"
         payloads: list[dict[str, Any]] = [{"connectorNum": connector_num}]
         if action == "stop" and order_id not in (None, ""):

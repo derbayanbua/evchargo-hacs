@@ -11,26 +11,27 @@ from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed, HomeAssistantError
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
-from .api import EvchargoApi, EvchargoApiError, EvchargoAuthError, EvchargoError
+from .api import (
+    EvchargoApi,
+    EvchargoApiError,
+    EvchargoAuthError,
+    EvchargoError,
+    normalize_charger_id,
+)
+from .charging_state import CHARGING_PATHS, coerce_bool, interpret_charging_state
 from .const import DEFAULT_SCAN_INTERVAL_SECONDS
 from .value import first_float, first_value
 
 _LOGGER = logging.getLogger(__name__)
 
 # The Evchargo cloud needs roughly one to three minutes to reflect start/stop
-# commands, so HA holds the requested switch state for this long.
+# commands, so HA polls faster for this long without claiming confirmation.
 _PENDING_COMMAND_GRACE_SECONDS = 180
 _FAST_POLL_INTERVAL = timedelta(seconds=15)
 _POWER_WINDOW_SECONDS = 300
 _POWER_MIN_SPAN_SECONDS = 60
 _POWER_STALE_SECONDS = 300
 
-CHARGING_PATHS = (
-    "detail.cpInCharging",
-    "detail.isCharging",
-    "detail.charging",
-    "detail.inCharging",
-)
 SESSION_ENERGY_PATHS = (
     "detail.chargingData.energy",
     "detail.energy",
@@ -61,7 +62,7 @@ class EvchargoDataUpdateCoordinator(DataUpdateCoordinator[dict]):
             always_update=True,
         )
         self.api = api
-        self.charger_id = charger_id
+        self.charger_id = normalize_charger_id(charger_id)
         self._normal_update_interval = timedelta(seconds=update_interval_seconds)
         self._charging_enabled: bool | None = None
         self._pending_state: bool | None = None
@@ -71,8 +72,13 @@ class EvchargoDataUpdateCoordinator(DataUpdateCoordinator[dict]):
 
     @property
     def charging_enabled(self) -> bool | None:
-        """Return the Home Assistant charging control state."""
+        """Return confirmed enablement; idle telemetry cannot prove permission."""
         return self._charging_enabled
+
+    @property
+    def requested_charging_enabled(self) -> bool | None:
+        """Return pending command intent, not confirmed charging permission."""
+        return self._pending_state
 
     async def async_set_charging_enabled(self, enabled: bool) -> None:
         """Execute charging control and keep HA state in sync with the charger."""
@@ -91,7 +97,6 @@ class EvchargoDataUpdateCoordinator(DataUpdateCoordinator[dict]):
         await self.async_request_refresh()
 
     def _set_pending_state(self, enabled: bool) -> None:
-        self._charging_enabled = enabled
         self._pending_state = enabled
         self._pending_since = monotonic()
         self.update_interval = _FAST_POLL_INTERVAL
@@ -151,57 +156,48 @@ class EvchargoDataUpdateCoordinator(DataUpdateCoordinator[dict]):
     async def _async_validate_can_start_charging(self) -> None:
         """Fail early with a clear message when no vehicle cable is connected."""
         data = await self.api.async_get_overview(self.charger_id)
-        run_status = _coerce_string(
-            first_value(
-                data,
-                "detail.runStatus",
-                "detail.status",
-                "detail.cpStatus",
-                "detail.chargeStatus",
-                "detail.state",
-            )
-        )
-        charging = _coerce_bool(first_value(data, *CHARGING_PATHS))
-
-        if charging is True:
-            return
-
-        if run_status == "available":
-            self._charging_enabled = False
+        state = interpret_charging_state(data)
+        if state.plugged_in is False:
+            self._charging_enabled = None
             raise EvchargoApiError(
                 "Cannot start charging: vehicle cable is not connected. Please plug in the cable and try again."
             )
+        if state.plugged_in is None or state.normalized is None:
+            self._charging_enabled = None
+            raise EvchargoApiError(
+                "Cannot start charging: vehicle connection is unknown, offline, "
+                "or inconsistent. Refresh the charger status and try again."
+            )
 
     def _reconcile_charging_state(self, data: dict[str, Any]) -> None:
-        """Follow the charger's reported state, honouring recent commands."""
-        actual_state = _coerce_bool(first_value(data, *CHARGING_PATHS))
+        """Keep activity, pending intent and permission uncertainty separate."""
+        actual_state = interpret_charging_state(data).charging
+        # Drawing power proves enablement. Not drawing power does not prove
+        # disablement: the vehicle may be waiting, suspended, asleep or full.
+        self._charging_enabled = True if actual_state is True else None
 
         if self._pending_state is not None and self._pending_since is not None:
             if actual_state == self._pending_state:
                 self._clear_pending_state()
             elif monotonic() - self._pending_since < _PENDING_COMMAND_GRACE_SECONDS:
                 _LOGGER.debug(
-                    "Holding requested charging state %s; charger still reports %s",
+                    "Waiting for requested charging activity %s; charger reports %s",
                     self._pending_state,
                     actual_state,
                 )
-                return
             else:
                 _LOGGER.warning(
-                    "Charger did not confirm the requested charging state %s within %ss; "
-                    "showing the reported state %s",
+                    "Charger did not confirm the requested charging activity %s within %ss; "
+                    "reported activity is %s, charging permission may be unknown",
                     self._pending_state,
                     _PENDING_COMMAND_GRACE_SECONDS,
                     actual_state,
                 )
                 self._clear_pending_state()
 
-        if actual_state is not None:
-            self._charging_enabled = actual_state
-
     def _derive_power(self, data: dict[str, Any]) -> float | None:
         """Estimate charging power (kW) from the growth of session energy."""
-        charging = _coerce_bool(first_value(data, *CHARGING_PATHS))
+        charging = coerce_bool(first_value(data, *CHARGING_PATHS))
         energy = first_float(data, *SESSION_ENERGY_PATHS)
         now = monotonic()
 
@@ -228,28 +224,6 @@ class EvchargoDataUpdateCoordinator(DataUpdateCoordinator[dict]):
                     (last_energy - first_energy) * 3600 / span, 2
                 )
         return self._last_derived_power
-
-
-def _coerce_bool(value: Any) -> bool | None:
-    if isinstance(value, bool):
-        return value
-    if value is None:
-        return None
-    if isinstance(value, (int, float)):
-        return bool(value)
-    if isinstance(value, str):
-        normalized = value.strip().lower()
-        if normalized in {"true", "1", "yes", "on"}:
-            return True
-        if normalized in {"false", "0", "no", "off"}:
-            return False
-    return None
-
-
-def _coerce_string(value: Any) -> str | None:
-    if value is None:
-        return None
-    return str(value).strip().lower() or None
 
 
 def _coerce_int(value: Any) -> int | None:
