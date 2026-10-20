@@ -82,6 +82,31 @@ Only non-private operational diagnostics are exposed as Home Assistant state att
 
 ## Connection, activity and charging permission
 
+### Upgrading an ID with surrounding whitespace
+
+Charger IDs are trimmed for API calls and registry identity. On setup, the
+integration migrates existing whitespace-bearing device and entity unique IDs
+before loading entities. It preserves the original device record, area assignment,
+entity IDs and entity customizations, so dashboards, automations and history using
+the original entities continue to use those same IDs.
+
+If the earlier trimming change already created a second charger, the migration
+keeps the original device and original entities, removes their redundant
+normalized-ID registry entries, and moves new-only entities (such as `Charging
+state`) to the original device without renaming them. References to the
+**duplicate** entities must be changed back to the original IDs; a warning logs
+each replacement. Recorder history is not deleted or merged: the original
+entities resume their own history/statistics, while any history and accumulated
+energy recorded under duplicate entities remain separate.
+
+Back up Home Assistant before installing the fix, then restart Home Assistant.
+Do not manually delete the original charger or its entities. Ambiguous identities,
+conflicts with another config entry, or a duplicate device shared with another
+integration stop setup with an explicit error rather than removing unrelated
+registry entries. The migration is safe to run again on subsequent setups.
+
+### Interpreting charger telemetry
+
 `Plugged in`, `Charging`, and `Charging state` share one conservative interpreter.
 Explicit connection fields (`isPlugged`, `plugged`, `connected`, `connectorPlugged`)
 are considered alongside the recognized status vocabulary below. False is a real

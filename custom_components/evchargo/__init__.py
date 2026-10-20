@@ -19,6 +19,7 @@ from .const import (
     PLATFORMS,
 )
 from .coordinator import EvchargoDataUpdateCoordinator
+from .migration import async_migrate_charger_identity
 
 
 EvchargoConfigEntry = ConfigEntry[EvchargoRuntimeData]
@@ -36,8 +37,6 @@ async def _async_update_listener(hass: HomeAssistant, entry: EvchargoConfigEntry
 
 async def async_setup_entry(hass: HomeAssistant, entry: EvchargoConfigEntry) -> bool:
     """Set up Evchargo from a config entry."""
-    entry.async_on_unload(entry.add_update_listener(_async_update_listener))
-
     api = EvchargoApi(
         async_get_clientsession(hass),
         entry.data[CONF_USERNAME],
@@ -60,11 +59,13 @@ async def async_setup_entry(hass: HomeAssistant, entry: EvchargoConfigEntry) -> 
         update_interval_seconds=scan_interval_seconds,
     )
     await coordinator.async_config_entry_first_refresh()
+    async_migrate_charger_identity(hass, entry)
+    entry.async_on_unload(entry.add_update_listener(_async_update_listener))
 
     entry.runtime_data = EvchargoRuntimeData(
         api=api,
         coordinator=coordinator,
-        charger_id=entry.data[CONF_CHARGER_ID],
+        charger_id=coordinator.charger_id,
     )
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
