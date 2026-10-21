@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+- migrate whitespace-bearing charger device/entity identities before loading platforms; repair duplicates caused by the earlier trimming change while retaining original device/entity IDs, customizations and history references, and moving new-only entities onto the original device
 - share conservative connection/activity interpretation between binary sensors, the start guard and a new normalized `Charging state` (`A`/`B`/`C`) sensor; preserve vendor status and raw diagnostic attributes
 - exclude billing occupancy and cable-holder state from vehicle-connection detection; keep unknown, offline, faulted and contradictory normalized states unknown
 - separate pending start/stop intent from observed activity and charging permission; expose unknown switch state instead of treating idle/suspended vehicles as disabled or API acknowledgements as proof of enablement
